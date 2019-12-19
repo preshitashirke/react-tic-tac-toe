@@ -14,6 +14,7 @@ import './index.css';
       renderSquare(i) {
         return (
             <Square 
+                key = {`square_${i}`}
                 value={this.props.squares[i]}
                 onClick = {()=> this.props.onClick(i)}   
             />
@@ -21,29 +22,25 @@ import './index.css';
     }
 
     render() {
+      let count = -1;
       return (
         <div>
-          <div className="board-row">
-            {this.renderSquare(0)}
-            {this.renderSquare(1)}
-            {this.renderSquare(2)}
-          </div>
-          <div className="board-row">
-            {this.renderSquare(3)}
-            {this.renderSquare(4)}
-            {this.renderSquare(5)}
-          </div>
-          <div className="board-row">
-            {this.renderSquare(6)}
-            {this.renderSquare(7)}
-            {this.renderSquare(8)}
-          </div>
+          {[0,1,2].map(()=>{
+            return (
+              <div className="board-row">
+                {[0,1,2].map(()=>{
+                  count = count + 1;
+                  return this.renderSquare(count)
+                })}
+              </div>
+            )
+          })}
         </div>
       );
     }
   }
   
-  const place = {
+  const location = {
     0: [0,0],
     1: [0,1],
     2: [0,2],
@@ -62,11 +59,14 @@ import './index.css';
         this.state = {
             xIsNext: true,
             history: [{
-                squares: Array(9).fill(null)
+                squares: Array(9).fill(null),
+                squareNumber: null,
+                stepNumber: null
             }],
             stepNumber: 0
         }
-
+        this.selectedMove = null;
+        this.toggleState = true;
     }
 
     calculateWinner(squares) {
@@ -98,7 +98,9 @@ import './index.css';
       squares[i] = this.state.xIsNext ? 'X' : 'O';
       this.setState({
           history: history.concat([{
-              squares
+              squares,
+              squareNumber: i,
+              stepNumber: history.length + 1
           }]),
           xIsNext : !this.state.xIsNext,
           stepNumber: history.length
@@ -110,6 +112,24 @@ import './index.css';
             stepNumber: move,
             xIsNext : (move%2) == 0
         })
+        this.selectedMove = move;
+    }
+
+    getColRow = ( squareNumber ) => {
+      if(!location[squareNumber]) return;
+      return `( ${location[squareNumber][1]}, ${location[squareNumber][0]})`;
+    }
+
+    isSelectedMove = ( move )=> {
+      return move === this.selectedMove;
+    }
+
+    toggleMoves = ()=> {
+      const history = this.state.history.slice();
+      this.setState({
+        history : history.reverse()
+      })
+      this.toggleState = !this.toggleState;
     }
 
     render() {
@@ -124,10 +144,15 @@ import './index.css';
         }
 
         const moves = history.map((step, move) => {
-            const message = move ? `Go to move # ${move}` : `Go to game start`
+          let message;
+          if(this.toggleState) {
+             message = move ? `Go to move # ${step.stepNumber} ${this.getColRow(step.squareNumber)}` : `Go to game start`
+          } else {
+             message = move < history.length - 1 ? `Go to move # ${step.stepNumber} ${this.getColRow(step.squareNumber)}` : `Go to game start`
+          }
             return (
                 <li key={`step_${move}`}>
-                    <button onClick={()=>this.jumpTo(move)}>{message}</button>
+                    <button className={this.isSelectedMove(move) ? 'bold' : ''} onClick={()=>this.jumpTo(move)}>{message}</button>
                 </li>
             )
         })
@@ -140,6 +165,7 @@ import './index.css';
           <div className="game-info">
           <div className="status">{status}</div>
             <ol>{moves}</ol>
+            <button onClick={this.toggleMoves}>Sort moves</button>
           </div>
         </div>
       );
