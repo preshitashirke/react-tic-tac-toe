@@ -125,11 +125,26 @@ import './index.css';
     }
 
     toggleMoves = ()=> {
-      const history = this.state.history.slice();
-      this.setState({
-        history : history.reverse()
-      })
       this.toggleState = !this.toggleState;
+      this.forceUpdate();
+    }
+
+    getMoves = ()=> {
+      const moves = this.state.history.map((step, move) => {
+        const message = move ? `Go to move # ${step.stepNumber} ${this.getColRow(step.squareNumber)}` : `Go to game start`
+          return (
+              <li key={`step_${move}`}>
+                  <button className={this.isSelectedMove(move) ? 'bold' : ''} onClick={()=>this.jumpTo(move)}>{message}</button>
+              </li>
+          )
+      })
+      if(this.toggleState) {
+        return moves;
+      } else{
+        return moves.reverse();
+
+      }
+      
     }
 
     render() {
@@ -142,20 +157,6 @@ import './index.css';
         } else{
             status = `Next player: ${this.state.xIsNext ? 'X' : 'O'}`;
         }
-
-        const moves = history.map((step, move) => {
-          let message;
-          if(this.toggleState) {
-             message = move ? `Go to move # ${step.stepNumber} ${this.getColRow(step.squareNumber)}` : `Go to game start`
-          } else {
-             message = move < history.length - 1 ? `Go to move # ${step.stepNumber} ${this.getColRow(step.squareNumber)}` : `Go to game start`
-          }
-            return (
-                <li key={`step_${move}`}>
-                    <button className={this.isSelectedMove(move) ? 'bold' : ''} onClick={()=>this.jumpTo(move)}>{message}</button>
-                </li>
-            )
-        })
   
       return (
         <div className="game">
@@ -164,7 +165,7 @@ import './index.css';
           </div>
           <div className="game-info">
           <div className="status">{status}</div>
-            <ol>{moves}</ol>
+            <ol>{this.getMoves()}</ol>
             <button onClick={this.toggleMoves}>Sort moves</button>
           </div>
         </div>
